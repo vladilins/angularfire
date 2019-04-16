@@ -1,0 +1,297 @@
+<div class="tab-panel" class="top-section">
+  <div class="container-fluid">
+    <toaster-container></toaster-container>
+
+    <div class="row content-pane px-1 py-1">
+      <div class="col-md-12">
+        <div class="row content-header">
+          <h3 class="color-hiq-pink">
+            <span class="mr-2" i18n>Competence:</span><span class="employee-name">{{ employee.firstName }} {{ employee.lastName }}</span>
+          </h3>
+        </div>
+      </div>
+    </div>
+
+    <h3>New UI</h3>
+    <div
+    cdkDropList
+    [cdkDropListData]="groups"
+    (cdkDropListDropped)="dropGroup($event)">
+
+      <div
+      cdkDropListGroup
+      class="example-container container"
+      *ngFor="let group of groups"
+      cdkDrag
+      [cdkDragData]="group">
+      <div>{{ group.title }}</div>
+      <div
+        cdkDropList
+        class="example-list"
+        id="{{ group.id }}"
+        [cdkDropListData]="group.items"
+        (cdkDropListDropped)="dropItem($event)"
+        [cdkDropListConnectedTo]="getConnectedList()"
+        cdkDropListOrientation="horizontal">
+        <div
+          class="item"
+          *ngFor="let item of group.items"
+          cdkDrag
+          [cdkDragData]="item">
+          <div>{{ item.competence?item.competence.name:"???" }}</div>
+          <div>
+            <span>{{ item.numberOfYears }}</span>
+            <span>{{ item.rating }}</span>
+            <span class="edit oi oi-pencil"
+              (click)="onEditItem(item, itemEditor)"></span>
+          </div>
+        </div>
+
+        <div
+          class="add-item-button">
+          <span
+          class="oi oi-plus"
+          (click)="onNewItem(group.id, itemEditor)"></span>
+          </div>
+      </div>
+
+      </div>
+    </div>
+    <button type="button" class="btn btn-primary" (click)="addGroup()">
+      Add Group
+    </button>
+    
+  <!--ITEM EDIT DIALOG-->
+  <div class="row content-pane px-1 py-1">
+    <ng-template #itemEditor let-c="close" let-d="dismiss">
+      <div class="modal-header">
+        <h4 class="modal-title" id="modal-basic-title">{{openItemIsNew?"New Competence":"Competence"}}</h4>
+        <button type="button" class="close" aria-label="Close" (click)="d('Cross click')">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form name="editCompetenceForm"
+              #editCompetenceForm="ngForm"
+              (ngSubmit)="editCompetenceForm.form.valid && saveCompetence()"
+              novalidate>
+
+          
+
+          <div class="form-group row">
+            <label for="competences" class="col-md-4 col-form-label" i18n>Methods/Tools:</label>
+            <div class="col-md-7">
+              <!-- <tag-input 
+                         [(ngModel)]='competences'
+                         [ngModelOptions]="{standalone: true}"
+                         [onlyFromAutocomplete]="true"
+                         identifyBy="id"
+                         displayBy="name"
+                         placeholder="+ Method/Tool"
+                         i18n-placeholder>
+                <tag-input-dropdown [autocompleteItems]="allCompetences"
+                                    identifyBy="id"
+                                    displayBy="name"
+                                    [appendToBody]="false">
+                </tag-input-dropdown>
+              </tag-input> -->
+
+               <input type="text" class="form-control"  [(ngModel)]="competence" (click)='openDropDown() ' (keydown)='search($event)'> 
+               <div clickOutside (clickOutside)="closeDropDown()">
+                  <div *ngIf='showDropDown' class='search-drop-down '>
+                      <div  class='search-results ' *ngFor="let s of allCompetences">
+                          <div>
+                            {{s.name}}
+                          </div>
+                      </div>
+                  </div>
+              </div>  
+            </div>
+          </div>
+
+          <div class="form-group row">
+            <label for="numberOfYears" class="col-md-4 col-form-label" i18n>Number of Years:</label>
+          <div class="col-md-7">
+            <input 
+                   name="numberOfYears"
+                   type="number"
+                   class="form-control"
+                   
+                   [(ngModel)]="numberOfYears"
+                   required
+                   min="1"
+                   [ngClass]="{ 'is-invalid': editCompetenceForm.submitted && numberOfYears.invalid }">
+          </div>
+          </div>
+
+          <div class="form-group row">
+            <label for="rating" class="col-md-4 col-form-label" i18n>Rating:</label>
+            <ngb-rating id="rating"
+                        name="rating"
+                        class="form-control col-md-7"
+                        
+                        [(ngModel)]="openItem.rating"
+                        required
+                        [ngClass]="{ 'is-invalid': editCompetenceForm.submitted && rating.invalid }"
+                        [rate]="openItem.rating"></ngb-rating>
+          </div>
+
+          <div class="row">
+            <div class="col-md-12 text-right mt-2">
+              <button id="saveButton" name="saveButton" type="submit" class="btn btn-primary" i18n>Save</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </ng-template>
+  </div>
+
+
+    <!--MODAL DIALOG-->
+    <div class="row content-pane px-1 py-1">
+      <ng-template #content let-c="close" let-d="dismiss">
+        <div class="modal-header">
+          <h4 class="modal-title" id="modal-basic-title" i18n>Add Competence</h4>
+          <button type="button" class="close" aria-label="Close" (click)="d('Cross click')">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <form name="newCompetenceForm"
+                #newCompetenceForm="ngForm"
+                (ngSubmit)="newCompetenceForm.form.valid && addCompetence()"
+                novalidate>
+
+            <div class="form-group row">
+              <label for="competence" class="col-md-4 col-form-label" i18n>Competence:</label>
+              <div class="col-md-7">
+              <select name="competence" id="competence" class="form-control"
+                      [(ngModel)]="newCompetence.competence.id">
+                <option *ngFor="let cg of allCompetences" [value]="cg.id">
+                  {{ cg.name }}
+                </option>
+              </select>
+            </div>
+            </div>
+
+            <div class="form-group row">
+              <label for="numberOfYears" class="col-md-4 col-form-label" i18n>Number of Years:</label>
+            <div class="col-md-7">
+              <input id="numberOfYears"
+                     name="numberOfYears"
+                     type="number"
+                     class="form-control"
+                     #numberOfYears="ngModel"
+                     [(ngModel)]="newCompetence.numberOfYears"
+                     required
+                     min="1"
+                     [ngClass]="{ 'is-invalid': newCompetenceForm.submitted && numberOfYears.invalid }">
+            </div>
+            </div>
+
+            <!--
+            <div class="form-group row">
+              <label for="rating" class="col-md-4 col-form-label" i18n>Rating:</label>
+              <ngb-rating id="rating"
+                          name="rating"
+                          class="form-control col-md-7"
+                          #rating="ngModel"
+                          [(ngModel)]="newCompetence.rating"
+                          required
+                          [ngClass]="{ 'is-invalid': newCompetenceForm.submitted && rating.invalid }"
+                          [rate]="newCompetence.rating"></ngb-rating>
+            </div>
+            -->
+
+            <div class="row">
+              <div class="col-md-12 text-right mt-2">
+                <button id="saveButton" name="saveButton" type="submit" class="btn btn-primary" i18n>Save</button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </ng-template>
+
+      <div class="col-md-12">
+        <div class="text-right mb-2">
+          <button type="submit"
+                  class="btn btn-primary"
+                  id="add-button"
+                  (click)="open($event, content)"
+                  i18n="@@AddButton">
+            Add
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-md-12">
+        <ngx-datatable
+          class="bootstrap ngx-datatable"
+          [rows]="rows"
+          [columnMode]="'flex'"
+          [headerHeight]="40"
+          [footerHeight]="40"
+          [limit]="20"
+          [sortType]="'single'"
+          [sorts]="[{prop: 'competence', dir: 'asc'}]"
+          [rowHeight]="'auto'">
+
+          <ngx-datatable-column name="{{getHeaderName('competence')}}" prop="competence" [flexGrow]="3">
+            <ng-template ngx-datatable-cell-template let-rowIndex="rowIndex" let-value="value" let-row="row">
+              <span>{{value}}</span>
+            </ng-template>
+          </ngx-datatable-column>
+
+          <ngx-datatable-column name="{{getHeaderName('years')}}" prop="years" [flexGrow]="2">
+            <ng-template ngx-datatable-cell-template let-rowIndex="rowIndex" let-value="value" let-row="row">
+            <span (click)="editing[rowIndex + '-years'] = true"
+                  *ngIf="!editing[rowIndex + '-years']">
+              {{value}}
+            </span>
+            <span (click)="editing[rowIndex + '-years'] = true" style="margin-left: 5px"
+                  *ngIf="!editing[rowIndex + '-years']" class="oi oi-pencil">
+            </span>
+              <input
+                autofocus
+                (blur)="updateYears($event, rowIndex, row.id)"
+                *ngIf="editing[rowIndex+ '-years']"
+                type="number"
+                min="0"
+                max="50"
+                [value]="value"
+              />
+            </ng-template>
+          </ngx-datatable-column>
+
+          <!--
+          <ngx-datatable-column name="{{getHeaderName('rating')}}" prop="rating" [flexGrow]="2">
+            <ng-template ngx-datatable-cell-template let-rowIndex="rowIndex" let-value="value" let-row="row">
+              <ngb-rating [rate]="value" (rateChange)="updateRating($event, row.id)"></ngb-rating>
+            </ng-template>
+          </ngx-datatable-column>
+          -->
+
+          <ngx-datatable-column name="" [flexGrow]="1">
+            <ng-template ngx-datatable-cell-template let-row="row">
+              <div class="text-right px-2">
+                <ng-template #deleteContent>
+                  <button class="btn btn-danger mx-1" (click)="p.close();">No</button>
+                  <button class="btn btn-success mx-1" (click)="p.close(); delete($event, row.id)">Yes</button>
+                </ng-template>
+                <span class="oi oi-trash"
+                      [ngbPopover]="deleteContent"
+                      popoverTitle="Are you sure?"
+                      #p="ngbPopover"
+                      triggers="manual"
+                      (click)="p.open()"
+                      placement="left"></span>
+              </div>
+            </ng-template>
+          </ngx-datatable-column>
+        </ngx-datatable>
+      </div>
+    </div>
+  </div>
+</div>
